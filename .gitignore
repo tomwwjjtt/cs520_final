@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# files
+test.py
+/data_shy_bull.json
+/data_killer_bull_25.json
+/picture/
+/data_killer_bull_25.json
