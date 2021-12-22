@@ -25,13 +25,14 @@ class BullFighter:
         self.path=[]
         self.strategy=[]
 
+    # find surround cells of the robot
     def generate_surround_position(self):
         surround_position = []
         x_x, x_y = self.x_position
         for ox, oy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1)]:
             surround_position.append((x_x + ox, x_y + oy))
         return surround_position
-
+    # approach mode that the robot move the the bull as fast as possible
     def approaching_mode(self, target_position):
         start_cell = Cell(self.position)
         goal_cell = Cell(target_position)
@@ -42,12 +43,14 @@ class BullFighter:
         return self.position
 
     @staticmethod
+    # check if the bull is in robot sight
     def in_bull_sight(current_position, target_position):
         if abs(current_position[0] - target_position[0]) <= 2 and abs(current_position[1] - target_position[1]) <= 2:
             return True
         else:
             return False
 
+    # test the robot is walk in the dead end
     def is_surround_target(self, robot_position):
         # only one cell surround target
         # if robot_position[0]==self.x_position[0]-1 and robot_position[1]==self.x_position[1]:
@@ -56,6 +59,8 @@ class BullFighter:
         else:
             return False
 
+
+    # test the cell that the robot can walk in
     def get_available_forward(self, target_position):
         available_position = []
         for ox, oy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, 1), (-1, 1), (1, -1)]:
@@ -69,6 +74,8 @@ class BullFighter:
         available_position.sort(key=lambda t:math.pow((self.x_position[0]-t[0]),2)+math.pow((self.x_position[1]-t[1]),2))
         return available_position
 
+
+    # simulate bull's moving to make sure that which cell the robot should walk
     def simulate_bull_move(self, robot_position, bull_position):
         total_length = []
         possible_movement = []
@@ -93,9 +100,11 @@ class BullFighter:
         return total_length
 
     @staticmethod
+    # calculate distance use manhatten distance
     def cal_dist(current_position, robot_position):
         return abs(current_position[0] - robot_position[0]) + abs(current_position[1] - robot_position[1])
 
+    # filter the cells that the robot cannot move
     def filter_cells(self, available_position, bull_position):
         filtered_cells=[]
         # current_dist=self.cal_dist(self.position, self.x_position)
@@ -112,6 +121,7 @@ class BullFighter:
             filtered_cells.append(self.position)
         return filtered_cells
 
+    # navigating mode that the robot make the bull move  near to X
     def navigating_mode(self, target_position):
         available_position = self.get_available_forward(target_position)
         available_position=self.filter_cells(available_position, target_position)
@@ -122,40 +132,7 @@ class BullFighter:
         self.position = available_position[sorted_position[0][0]]
         return self.position
 
-    # def guiding_mode(self, bull_position):
-    #     available_position = self.get_available_forward(bull_position)
-    #     sorted_solution = []
-    #     all_possible_solution = []
-    #     available_position.sort(key=lambda t: abs(t[0]-self.x_position[0])+abs(t[1]-self.x_position[1]))
-    #     for position in available_position:
-    #         all_possible_solution.append(self.simulate_bull_move(position, bull_position))
-    #         all_possible_solution[-1].sort()
-    #     for i in range(len(all_possible_solution)):
-    #         sorted_solution.append((i, all_possible_solution[i]))
-    #     sorted_solution.sort(key=lambda t: t[1])
-    #     if len(sorted_solution)==0:
-    #         print("a")
-    #     self.position = available_position[sorted_solution[0][0]]
-    #     return self.position
-
-
-    # def guiding_mode(self, bull_position):
-    #     available_position = self.get_available_forward(bull_position)
-    #     sorted_solution = []
-    #     all_possible_solution = []
-    #     available_position.sort(key=lambda t: abs(t[0]-self.x_position[0])+abs(t[1]-self.x_position[1]))
-    #     for index, position in enumerate(available_position):
-    #         # all_possible_solution.append(self.simulate_bull_move(position, bull_position))
-    #         sorted_solution.append((index, np.mean(self.simulate_bull_move(position, bull_position))))
-    #         # all_possible_solution[-1].sort()
-    #     # for i in range(len(all_possible_solution)):
-    #     #     sorted_solution.append((i, all_possible_solution[i]))
-    #     sorted_solution.sort(key=lambda t: t[1])
-    #     if len(sorted_solution)==0:
-    #         print("a")
-    #     self.position = available_position[sorted_solution[0][0]]
-    #     return self.position
-
+    # simulate bull's movement in guide mode, to help robot find the best cell, return the length of the road
     def simulate_for_guide_mode(self, bull_position, robot_position, bull_next_position):
         total_length = []
         possible_movement = []
@@ -177,14 +154,12 @@ class BullFighter:
                 (new_position[1] - bull_next_position[1]), 2))
         return total_length
 
+    #guiding mode, help bull move to X
     def guiding_mode(self, bull_position):
         sorted_solution=[]
         Astar_bull_path=self.Astar_bull.search(Cell(bull_position), Cell(self.x_position))
 
 
-        # bull_next_position=Astar_bull_path[1].get_position()
-        # if self.position==bull_next_position:
-        #     bull_next_position=Astar_bull_path[2].get_position()
 
         if Astar_bull_path[1].get_position()==self.position:
             bull_next_position = Astar_bull_path[2].get_position()
@@ -198,7 +173,6 @@ class BullFighter:
                     break
                 cur_dist=dist
                 bull_next_position=pos
-        # bull_next_position=self.Astar_bull.search(Cell(bull_position), Cell(self.x_position))[1].get_position()
         available_position = self.get_available_forward(bull_position)
         available_position.sort(key=lambda t:math.pow((t[0]-bull_next_position[0]),2)+math.pow((t[1]-bull_next_position[1]), 2))
         for index, position in enumerate(available_position):
@@ -207,6 +181,7 @@ class BullFighter:
         self.position = available_position[sorted_solution[0][0]]
         return self.position
 
+    #active robot moving
     def move(self, bull_position):
         if not self.in_bull_sight(self.position, bull_position):
             current_position = self.approaching_mode(bull_position)
@@ -233,6 +208,7 @@ class Bull:
         # test
         self.path=[]
 
+    # the bull do not find robot, move randomly
     def laid_back_mode(self):
         cx, cy = self.position
         next_position = []
@@ -248,9 +224,11 @@ class Bull:
         return self.position
 
     @staticmethod
+    # calculate distance by mahatten distance
     def cal_dist(current_position, robot_position):
         return abs(current_position[0] - robot_position[0]) + abs(current_position[1] - robot_position[1])
 
+    # the bull find robot ,and crash to robot
     def crash_mode(self, robot_position):
         current_distance = self.cal_dist(self.position, robot_position)
         cx, cy = self.position
@@ -275,12 +253,14 @@ class Bull:
         return self.position
 
     @staticmethod
+    # test if the robit is in bull's sight
     def in_bull_sight(current_position, target_position):
         if abs(current_position[0] - target_position[0]) <= 2 and abs(current_position[1] - target_position[1]) <= 2:
             return True
         else:
             return False
 
+    #active bull's moving
     def move(self, robot_position):
         if self.in_bull_sight(self.position, robot_position):
             current_position = self.crash_mode(robot_position)
